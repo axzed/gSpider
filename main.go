@@ -1,31 +1,36 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
+	"context"
+	"github.com/chromedp/chromedp"
+	"log"
+	"regexp"
+	"time"
 )
 
+var headerRe = regexp.MustCompile(`<div class="small_cardcontent__BTALp"[\s\S]*?<h2>([\s\S]*?)</h2>`)
+
 func main() {
-	url := "https://www.thepaper.cn/"
-	resp, err := http.Get(url)
+	// 1. 创建谷歌浏览器实例
+	ctx, cancel := chromedp.NewContext(
+		context.Background(),
+	)
+	defer cancel()
+
+	// 2. 设置context超时时间
+	ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	// 3. 爬取网页内容
+	var example string
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(`https://www.zhihu.com/question/381784377`),
+		chromedp.WaitVisible(`body > footer`),
+		chromedp.Click(`#example-After`, chromedp.NodeVisible),
+		chromedp.Value(`#example-After textarea`, &example),
+	)
 	if err != nil {
-		fmt.Printf("fetch url error:%v", err)
-		return
+		log.Fatal(err)
 	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("status code error:%v", resp.StatusCode)
-		return
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("read body error:%v", err)
-		return
-	}
-
-	fmt.Println("body", string(body))
+	log.Printf("Go's time.After example:\\n%s", example)
 }
