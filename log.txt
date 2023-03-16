@@ -1,0 +1,2 @@
+{"level":"INFO","ts":"2023-03-16T22:15:06.953+0800","caller":"gSpider/main.go:19","msg":"log init end"}
+{"level":"ERROR","ts":"2023-03-16T22:15:08.977+0800","caller":"gSpider/main.go:33","msg":"read content failed","error":"Get \"https://google.com\": proxyconnect tcp: dial tcp 127.0.0.1:8888: connectex: No connection could be made because the target machine actively refused it."}
