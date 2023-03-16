@@ -3,11 +3,13 @@ package collect
 import (
 	"bufio"
 	"fmt"
+	"github.com/axzed/gSpider/proxy"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // Fetcher is an interface that wraps the Get method.
@@ -42,12 +44,24 @@ func (BaseFetch) Get(url string) ([]byte, error) {
 
 // BrowserFetch 可以调整浏览器的header
 type BrowserFetch struct {
+	TimeOut time.Duration   // 超时时间
+	Proxy   proxy.ProxyFunc // 代理
 }
 
 // Get 用于获取网页的内容
-func (BrowserFetch) Get(url string) ([]byte, error) {
+func (b BrowserFetch) Get(url string) ([]byte, error) {
 	// 新建一个http.Client,
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: b.TimeOut, // 设置超时时间
+	}
+	if b.Proxy != nil {
+		// 获取默认的transport
+		transport := http.DefaultTransport.(*http.Transport)
+		// 设置代理
+		transport.Proxy = b.Proxy
+		// 为客户端设置transport
+		client.Transport = transport
+	}
 	// 新建一个http.Request
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
