@@ -14,7 +14,7 @@ import (
 
 // Fetcher is an interface that wraps the Get method.
 type Fetcher interface {
-	Get(url string) ([]byte, error)
+	Get(url *Request) ([]byte, error)
 }
 
 // BaseFetch is a struct that implements Fetcher interface.
@@ -44,15 +44,16 @@ func (BaseFetch) Get(url string) ([]byte, error) {
 
 // BrowserFetch 可以调整浏览器的header
 type BrowserFetch struct {
-	TimeOut time.Duration   // 超时时间
+	Timeout time.Duration   // 超时时间
 	Proxy   proxy.ProxyFunc // 代理
 }
 
 // Get 用于获取网页的内容
-func (b BrowserFetch) Get(url string) ([]byte, error) {
+func (b BrowserFetch) Get(request *Request) ([]byte, error) {
+
 	// 新建一个http.Client,
 	client := &http.Client{
-		Timeout: b.TimeOut, // 设置超时时间
+		Timeout: b.Timeout, // 设置超时时间
 	}
 	if b.Proxy != nil {
 		// 获取默认的transport
@@ -63,9 +64,13 @@ func (b BrowserFetch) Get(url string) ([]byte, error) {
 		client.Transport = transport
 	}
 	// 新建一个http.Request
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", request.Url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get url failed:%v", err)
+	}
+	// 如果有cookie，就在请求头中设置cookie
+	if len(request.Cookie) > 0 {
+		req.Header.Set("Cookie", request.Cookie)
 	}
 	// 在请求头中设置header
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
